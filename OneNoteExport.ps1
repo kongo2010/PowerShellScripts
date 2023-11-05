@@ -37,7 +37,10 @@ Function Export-OneNote-Page {
 	param( $onenote, $node, $path )
 	# Replace invalid file characters
 	$name = ReplaceIllegal -text $node.name
-	$file = $(Join-Path -Path $path -ChildPath "$($name).htm")
+	$len = [Math]::Min($name.Length, 64) # @@@ Changed
+	$name = $name.Substring(0,$len) # @@@ Changed
+	$idx = ReplaceIllegal -text $node.ID # @@@ Changed
+	$file = $(Join-Path -Path $path -ChildPath "$($name).($idx).htm") # @@@ Changed
 	Write-Host "Page: $($file)"
 	# Export
 	$onenote.Publish($node.ID, $file, 7, "")
@@ -48,7 +51,7 @@ Function Export-OneNote-Page {
 Function Export-OneNote-Attachments {
 	param ( $onenote, $node, $path )
 	$xml = ''
-	$schema = @{one=”http://schemas.microsoft.com/office/onenote/2013/onenote”}
+	$schema = @{one="http://schemas.microsoft.com/office/onenote/2013/onenote"}
 	$onenote.GetPageContent($node.ID, [ref]$xml)
 	$xml | Select-Xml -XPath "//one:Page/one:Outline/one:OEChildren/one:OE/one:InsertedFile" -Namespace $schema | foreach {
 		$file = Join-Path -Path $path -ChildPath $_.Node.preferredName
